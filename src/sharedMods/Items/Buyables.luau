@@ -1,6 +1,6 @@
 return {
-    ["BasicPart"] = {
-        Display = "Basic Part",
-        Cost = 5,
-    }
+	["BasicPart"] = {
+		Display = "Basic Part",
+		Cost = 7,
+	},
 }
