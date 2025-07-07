@@ -1,0 +1,41 @@
+{
+  "name": "Tycoon",
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "Modules": {
+        "$path": "src/sharedMods"
+      },
+      "Packages": {
+        "$path": "Packages"
+      }
+    },
+
+    "ServerScriptService": {
+      "InitServer": {
+        "$path": "src/server"
+      },
+      "Modules": {
+        "$path": "src/serverMods"
+      }
+    },
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+        "Client": {
+          "$path": "src/client"
+        }
+      }
+    },
+
+    "ServerStorage": {
+      "Frameworks": {
+        "$path": "src/storage/Frameworks"
+      },
+      "GameAssets": {
+        "$path": "src/storage/GameAssets"
+      }
+    }
+  }
+}
