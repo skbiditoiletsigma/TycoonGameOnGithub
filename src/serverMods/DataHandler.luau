@@ -3,6 +3,9 @@ dataHandler.Instances = require(script.Parent.Data.Instances)
 
 local players = game:GetService("Players")
 local serverStorage = game:GetService("ServerStorage")
+local marketplace = game:GetService("MarketplaceService")
+
+local tycoonStorage = serverStorage:WaitForChild("TycoonStorage")
 
 local frameworks = serverStorage.Frameworks
 local gameplay = frameworks.Gameplay
@@ -11,11 +14,23 @@ local data = gameplay.Data
 
 function dataHandler.PlayerAdded(Player: Player)
 	if Player.Parent == players then
-		dataHandler.Instances.MakeLeaderstats(Player)
+		dataHandler.Instances.MakeFolders(Player)
 	end
+
+	local assetId = 125304905004418
+	local currencyType = Enum.CurrencyType.Default
+
+	marketplace:PromptPurchase(Player, assetId, false, currencyType)
+	print(Player.Name, "has bought the tycoon")
 end
 
-function dataHandler.PlayerRemoving(Player: Player) end
+function dataHandler.PlayerRemoving(Player: Player)
+	local folder = tycoonStorage:FindFirstChild(Player.Name)
+
+	if folder then
+		folder:Destroy()
+	end
+end
 
 function dataHandler.Start()
 	players.PlayerAdded:Connect(dataHandler.PlayerAdded)

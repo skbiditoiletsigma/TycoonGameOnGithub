@@ -23,7 +23,7 @@ function DataFramework.new(datastoreName, defaultTemplate, autoSaveInterval)
 	self.datastoreName = datastoreName or "PlayerData"
 	self.defaultTemplate = defaultTemplate or { Cash = 0, Level = 1, Inventory = {} }
 	self.autoSaveInterval = autoSaveInterval or 60
-	self.dataStore = DataStoreService:GetDataStore(self.datastoreName)
+	self.dataStore = DataStoreService:GetDataStore("Pickle_"..self.datastoreName)
 	self._initialized = false
 	return self
 end
@@ -65,10 +65,10 @@ function DataFramework:LoadProfile(player)
 		self:_updateSessionAndClientDetails(profile, player)
 		return profile
 	end
+	
 	local data, loadCount = nil, 1
-	local success, stored = pcall(function()
-		return self.dataStore:GetAsync(tostring(userId))
-	end)
+	local success, stored = self:Get(tostring(userId))
+
 	if success and type(stored) == "table" then
 		data = stored.data or stored
 		loadCount = stored.loadCount or 1
@@ -117,9 +117,7 @@ function DataFramework:SaveProfile(player)
 		data = profile.data,
 		loadCount = profile.loadCount,
 	}
-	local success, err = pcall(function()
-		self.dataStore:SetAsync(tostring(userId), saveData)
-	end)
+	local success, err = self:Set(tostring(userId), saveData)
 	if not success then
 		warn("[DataFramework] Failed to save data for", player, err)
 	end
@@ -128,6 +126,18 @@ end
 function DataFramework:Release(player)
 	local userId = player.UserId
 	self.playerProfiles[userId] = nil
+end
+
+function DataFramework:Get(key)
+	local success, result = self.dataStore:GetAsync(key)				
+	return success, result
+end
+
+function DataFramework:Set(key, value)
+	local success, result = pcall(function()
+		return self.dataStore:SetAsync(key, value)
+	end)
+	return success, result
 end
 
 return DataFramework

@@ -1,11 +1,16 @@
 local serverStorage = game:GetService("ServerStorage")
+local serverScriptService = game:GetService("ServerScriptService")
 local collectionService = game:GetService("CollectionService")
+
+local serverModules = serverScriptService.Modules
 
 local gameAssets = serverStorage.GameAssets
 local components = gameAssets.Components
 
 local modules = components.Modules
 local models = components.Models
+
+local dataHandler = require(serverModules.DataHandler)
 
 local template = serverStorage.Template
 
@@ -26,22 +31,27 @@ end
 
 Tycoon.__index = Tycoon
 
-function Tycoon.new(Player : Player)
+function Tycoon.new(Player : Player, Spawn : Part)
 	local self = setmetatable({}, Tycoon)
 	self.Owner = Player
 	
 	self._TopicEvent = Instance.new("BindableEvent")
+	self._Spawn = Spawn
 		
 	return self
 end
 
 function Tycoon:Init()
-	self.Tycoon = LocalFunctions.CreateTycoon(template, CFrame.new(0,1,0), self.Owner)
+	self.Tycoon = LocalFunctions.CreateTycoon(template, self._Spawn.CFrame, self.Owner)
+	self._Spawn:SetAttribute("Occupied", true)
+
+	self.Owner.RespawnLocation = self.Tycoon.OwnerSpawn
+	
 	self:LockAll()
 end
 
 function Tycoon:Lock(instance)
-	instance.Parent = tycoonStorage
+	instance.Parent = tycoonStorage:FindFirstChild(self.Owner.Name)
 	self:CreateInstance(instance, modules.Unlockable)
 end
 
@@ -68,6 +78,14 @@ function Tycoon:LockAll()
 			self:AddInstances(instance)
 		end
 	end
+end
+
+function Tycoon:WaitForExit()
+	dataHandler.PlayerRemoving:Connect(function(player)
+		if self.Owner == player then
+			self:Destroy()
+		end
+	end)
 end
 
 function Tycoon:AddInstances(instance)
@@ -103,6 +121,7 @@ end
 
 function Tycoon:Destroy()
 	self.Tycoon:Destroy()
+	self._Spawn:SetAttribute("Occupied", false)
 	self._TopicEvent:Destroy()
 end
 

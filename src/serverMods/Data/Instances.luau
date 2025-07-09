@@ -1,5 +1,8 @@
 local instances = {}
 
+local serverStorage = game:GetService("ServerStorage")
+local tycoonStorage = serverStorage:WaitForChild("TycoonStorage")
+
 function instances.MakeLeaderstats(Player : Player)
 	local Leaderstats = Player:FindFirstChild("leaderstats")
 	
@@ -33,7 +36,10 @@ function instances.ConnectRebirths(StatsTable, Value : IntValue)
 end
 
 function instances.MakeFolders(Player : Player)
-	
+	instances.MakeLeaderstats(Player)
+
+	local folder = Instance.new("Folder", tycoonStorage)
+	folder.Name = Player.Name
 end
 
 return instances
