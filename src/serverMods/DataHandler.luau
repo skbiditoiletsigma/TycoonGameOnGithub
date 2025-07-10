@@ -1,40 +1,109 @@
 local dataHandler = {}
+dataHandler.SessionData = {}
+
 dataHandler.Instances = require(script.Parent.Data.Instances)
+dataHandler.Template = require(script.Parent.Data.Template)
 
 local players = game:GetService("Players")
 local serverStorage = game:GetService("ServerStorage")
-local marketplace = game:GetService("MarketplaceService")
+local dataStoreService = game:GetService("DataStoreService")
 
 local tycoonStorage = serverStorage:WaitForChild("TycoonStorage")
 
-local frameworks = serverStorage.Frameworks
-local gameplay = frameworks.Gameplay
+local playerAdded = Instance.new("BindableEvent")
+local playerRemoving = Instance.new("BindableEvent")
 
-local data = gameplay.Data
+dataHandler.PlayerAdded = playerAdded.Event
+dataHandler.PlayerRemoving = playerRemoving.Event
 
-function dataHandler.PlayerAdded(Player: Player)
-	if Player.Parent == players then
-		dataHandler.Instances.MakeFolders(Player)
+local dataStore = dataStoreService:GetDataStore("Pickle_TycoonData1")
+
+function dataHandler.LoadData(Player: Player)
+	local sucess, result = pcall(function()
+		return dataStore:GetAsync("Pickle_" .. tostring(Player.UserId))
+	end)
+
+	if not sucess then
+		warn("Failed to load data for " .. Player.Name, result)
 	end
 
-	local assetId = 125304905004418
-	local currencyType = Enum.CurrencyType.Default
-
-	marketplace:PromptPurchase(Player, assetId, false, currencyType)
-	print(Player.Name, "has bought the tycoon")
+	return sucess, result
 end
 
-function dataHandler.PlayerRemoving(Player: Player)
+function dataHandler.SaveData(Player: Player, data)
+	local sucess, result = pcall(function()
+		return dataStore:SetAsync("Pickle_" .. tostring(Player.UserId), data)
+	end)
+
+	if not sucess then
+		warn("Failed to save data for " .. Player.Name, result)
+	end
+
+	return sucess
+end
+
+function dataHandler.OnPlayerAdded(Player: Player)
+	if Player.Parent == players then
+		print("Player added", Player.Name)
+		Player.CharacterAdded:Connect(function(Character)
+			dataHandler.OnCharacterAdded(Player, Character)
+		end)
+
+		local success, data = dataHandler.LoadData(Player)
+		dataHandler.SessionData[Player.UserId] = success and data or dataHandler.Template
+
+		playerAdded:Fire(Player)
+		dataHandler.Instances.MakeFolders(Player, dataHandler.SessionData[Player.UserId])
+	end
+end
+
+function dataHandler.OnCharacterAdded(Player, Character)
+	local hum = Character:FindFirstChildOfClass("Humanoid")
+	if not hum then return end
+
+	hum.Died:Connect(function()
+		task.wait(3)
+		Player:LoadCharacter()
+	end)
+end
+
+function dataHandler.AddUnlockableId(Player: Player, id)
+	local data = dataHandler.SessionData[Player.UserId]
+
+	if not table.find(data.TycoonData.UnlockedIds, id) then
+		table.insert(data.TycoonData.UnlockedIds, id)
+	end
+end
+
+function dataHandler.GetUnlockedIds(Player: Player)
+	local data = dataHandler.SessionData[Player.UserId]
+	return data.TycoonData.UnlockedIds
+end
+
+function dataHandler.OnPlayerRemoving(Player: Player)
 	local folder = tycoonStorage:FindFirstChild(Player.Name)
 
 	if folder then
 		folder:Destroy()
 	end
+
+	dataHandler.SaveData(Player, dataHandler.SessionData[Player.UserId])
+	playerRemoving:Fire(Player)
+end
+
+function dataHandler.OnClose()
+	for _, Player in ipairs(players:GetPlayers()) do
+		dataHandler.OnPlayerRemoving(Player)
+	end
 end
 
 function dataHandler.Start()
-	players.PlayerAdded:Connect(dataHandler.PlayerAdded)
-	players.PlayerRemoving:Connect(dataHandler.PlayerRemoving)
+	for _, Player in ipairs(players:GetPlayers()) do
+		dataHandler.OnPlayerAdded(Player)
+	end
+
+	players.PlayerAdded:Connect(dataHandler.OnPlayerAdded)
+	players.PlayerRemoving:Connect(dataHandler.OnPlayerRemoving)
 
 	task.wait(0.5)
 
@@ -65,8 +134,8 @@ function dataHandler.Start()
 			coins.Value = value
 		end
 	end
-end
 
-dataHandler.Start()
+	game:BindToClose(dataHandler.OnClose)
+end
 
 return dataHandler

@@ -29,12 +29,10 @@ end
 
 function conveyor:EndTouched(hit)
     if hit:IsA("Part") then
-        local drop = drops[hit.Name]
-
-        if drop then
-            self.Tycoon:PublishTopic("ChangeCurrentCollection", drop)
-			hit:Destroy()
-        end
+        local worth = hit:GetAttribute("Worth")
+        self.Tycoon:PublishTopic("ChangeCurrentCollection", worth)
+        
+        hit:Destroy()
     end
 end
 

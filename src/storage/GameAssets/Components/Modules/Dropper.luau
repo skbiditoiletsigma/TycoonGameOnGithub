@@ -52,6 +52,8 @@ function dropper:Drop()
 	local newDrop = self.DropTemplate:Clone()
 	newDrop.Position = self.DropSpawn.WorldPosition
 	newDrop.Parent = self.Instance.Drops
+
+	newDrop:SetAttribute("Worth", buyables.Drops[self.DropTemplate.Name])
 end
 
 return dropper

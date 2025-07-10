@@ -48,6 +48,8 @@ function Tycoon:Init()
 	self.Owner.RespawnLocation = self.Tycoon.OwnerSpawn
 	
 	self:LockAll()
+	self:LoadUnlocked()
+	self:WaitForExit()
 end
 
 function Tycoon:Lock(instance)
@@ -56,14 +58,31 @@ function Tycoon:Lock(instance)
 end
 
 function Tycoon:Unlock(instance	, id)
+	dataHandler.AddUnlockableId(self.Owner, id)
 	collectionService:RemoveTag(instance, "Unlockable")
 	
 	self:AddInstances(instance)
 	instance.Parent = self.Tycoon.Assets
 end
 
+function Tycoon:LoadUnlocked()
+	local unlockedIds = dataHandler.GetUnlockedIds(self.Owner)
+
+	for _, id in pairs(unlockedIds) do
+		self:PublishTopic("Button", id)
+	end
+end
+
 function Tycoon:LockAll()
 	for _, instance in ipairs(self.Tycoon.Assets:GetDescendants()) do
+		if collectionService:HasTag(instance, "Unlockable") then
+			self:Lock(instance)
+		else
+			self:AddInstances(instance)
+		end
+	end
+
+	for _, instance in ipairs(self.Tycoon.Walls:GetDescendants()) do
 		if collectionService:HasTag(instance, "Unlockable") then
 			self:Lock(instance)
 		else

@@ -29,8 +29,6 @@ local function Init()
 		local PlayerTycoon = tycoon.new(player, FindSpawn())
 		PlayerTycoon:Init()
 
-		PlayerTycoon:WaitForExit()
-
 		tycoons[player.UserId.."-"..player.Name] = PlayerTycoon
 	end)
 	
