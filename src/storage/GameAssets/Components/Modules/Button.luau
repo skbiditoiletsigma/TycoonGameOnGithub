@@ -41,17 +41,36 @@ function Button:Init()
 	end
 
 	self:SetVisible(visible)
-	if not visible then return end
-
-	self.Prompt = self:CreatePrompt()
-
-	self.Subscription = self.Tycoon:SubscribeTopic("SetVisible", function(...)
-		self:SetVisible(...)
+	
+	-- Always set up the subscription to listen for ItemUnlocked events
+	self.Subscription = self.Tycoon:SubscribeTopic("ItemUnlocked", function(unlockedId)
+		self:CheckVisibility(unlockedId)
 	end)	
 
-	self.Prompt.Triggered:Connect(function(...)
-		self:Press(...)
-	end)
+	-- Only create prompt if initially visible
+	if visible then
+		self.Prompt = self:CreatePrompt()
+		self.Prompt.Triggered:Connect(function(...)
+			self:Press(...)
+		end)
+	end
+end
+
+function Button:CheckVisibility(unlockedId)
+	local id = self.Instance:GetAttribute("ID")
+	local item = Buyables[id]
+	
+	if item and item.Required and item.Required == unlockedId then
+		self:SetVisible(true)
+		
+		-- Create prompt if it doesn't exist
+		if not self.Prompt then
+			self.Prompt = self:CreatePrompt()
+			self.Prompt.Triggered:Connect(function(...)
+				self:Press(...)
+			end)
+		end
+	end
 end
 
 function Button:Press(Player)
@@ -107,25 +126,15 @@ end
 
 function Button:SetVisible(visible)
 	if not self.Instance or not self.Instance:IsDescendantOf(game) then return end
-	if visible then
-		self.Instance.Parent = self.Tycoon.Tycoon.Buttons
-		print("please fix this daddy")
-	else
-		local storage = tycoonStorage:FindFirstChild(self.Tycoon.Owner.Name)
-		if storage then
-			local buttonsFolder = storage:FindFirstChild("Buttons")
 
-			if buttonsFolder then
-				self.Instance.Parent = buttonsFolder
-			else
-				buttonsFolder = Instance.new("Folder")
-				buttonsFolder.Name = "Buttons"
-				buttonsFolder.Parent = storage
-
-				self.Instance.Parent = buttonsFolder
-			end
-		end
+	-- Set the button's visibility
+	self.Instance.Transparency = visible and 0 or 1
+	
+	-- Also handle the prompt visibility if it exists
+	if self.Prompt then
+		self.Prompt.Enabled = visible
 	end
 end
 
 return Button
+			

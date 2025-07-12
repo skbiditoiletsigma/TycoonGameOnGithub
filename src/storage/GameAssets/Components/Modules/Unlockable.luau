@@ -27,25 +27,10 @@ end
 
 function unlockable:OnButtonPressed(id)
 	if id == self.Instance:GetAttribute("UnlockableID") then
-		local storage = tycoonStorage:FindFirstChild(self.Tycoon.Owner.Name)
-		local buttonsFolder
-
-		if storage then
-			buttonsFolder = storage:FindFirstChild("Buttons")
-		end
-
-		if not buttonsFolder then return end
-
-		for _, button in ipairs(buttonsFolder:GetChildren()) do
-			local id2 = button:GetAttribute("ID")
-			local item = buyables[id2]
-
-			if item.Required == id then
-				print(id2, item.Required, id, "Correct")
-				self.Tycoon:PublishTopic("SetVisible", true)
-			end
-		end
-
+		-- Publish the item ID that was unlocked so buttons can check if they should become visible
+		self.Tycoon:PublishTopic("ItemUnlocked", id)
+		
+		-- Unlock this instance
 		self.Tycoon:Unlock(self.Instance, id)
 		self.Subscription:Disconnect()
 	end

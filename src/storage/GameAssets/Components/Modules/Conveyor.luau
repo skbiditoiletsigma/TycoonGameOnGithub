@@ -30,9 +30,10 @@ end
 function conveyor:EndTouched(hit)
     if hit:IsA("Part") then
         local worth = hit:GetAttribute("Worth")
-        self.Tycoon:PublishTopic("ChangeCurrentCollection", worth)
-        
-        hit:Destroy()
+        if worth then
+            self.Tycoon:PublishTopic("ChangeCurrentCollection", worth)
+            hit:Destroy()
+        end
     end
 end
 

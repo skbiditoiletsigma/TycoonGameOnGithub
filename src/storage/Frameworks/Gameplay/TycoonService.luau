@@ -75,7 +75,7 @@ function Tycoon:LoadUnlocked()
 	local unlockedIds = dataHandler.GetUnlockedIds(self.Owner)
 
 	for _, id in pairs(unlockedIds) do
-		self:PublishTopic("Button", id)
+		self:PublishTopic("ItemUnlocked", id)
 	end
 end
 
