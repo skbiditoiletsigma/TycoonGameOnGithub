@@ -1,6 +1,12 @@
 local serverStorage = game:GetService("ServerStorage")
+local replicatedStorage = game:GetService("ReplicatedStorage")
 local serverScriptService = game:GetService("ServerScriptService")
 local collectionService = game:GetService("CollectionService")
+
+local mod = replicatedStorage.Modules
+local items = mod.Items
+
+local buyables = require(items.Buyables)
 
 local serverModules = serverScriptService.Modules
 

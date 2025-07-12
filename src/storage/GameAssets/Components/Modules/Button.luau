@@ -2,10 +2,18 @@ local Button = {}
 Button.__index = Button
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerStorage = game:GetService("ServerStorage")
+
+local tycoonStorage = ServerStorage:WaitForChild("TycoonStorage")
+
 local Modules = ReplicatedStorage.Modules
 local Items = Modules.Items
 
 local Buyables = require(Items.Buyables)
+
+local ServerScriptService = game:GetService("ServerScriptService")
+local serverModules = ServerScriptService.Modules
+local dataHandler = require(serverModules.DataHandler)
 
 function Button.new(tycoon, instance)
 	local self = setmetatable({}, Button)
@@ -17,7 +25,29 @@ function Button.new(tycoon, instance)
 end
 
 function Button:Init()
+	local id = self.Instance:GetAttribute("ID")	
+	local item = Buyables[id]
+	local visible = true
+
+	if item and item.Required then
+		local unlockedIds = dataHandler.GetUnlockedIds(self.Tycoon.Owner)
+		visible = false
+		for _, unlockedId in ipairs(unlockedIds) do
+			if unlockedId == item.Required then
+				visible = true
+				break
+			end
+		end
+	end
+
+	self:SetVisible(visible)
+	if not visible then return end
+
 	self.Prompt = self:CreatePrompt()
+
+	self.Subscription = self.Tycoon:SubscribeTopic("SetVisible", function(...)
+		self:SetVisible(...)
+	end)	
 
 	self.Prompt.Triggered:Connect(function(...)
 		self:Press(...)
@@ -36,7 +66,20 @@ function Button:Press(Player)
 
 	local currentMoney = _G.GetMoney(Player)
 
-	if Player == self.Tycoon.Owner and currentMoney >= cost then
+	-- Prerequisite check
+	local canUnlock = true
+	if item and item.Required then
+		local unlockedIds = dataHandler.GetUnlockedIds(Player)
+		canUnlock = false
+		for _, unlockedId in ipairs(unlockedIds) do
+			if unlockedId == item.Required then
+				canUnlock = true
+				break
+			end
+		end
+	end
+
+	if Player == self.Tycoon.Owner and currentMoney >= cost and canUnlock then
 		_G.SetMoney(Player, currentMoney - cost)
 		self.Tycoon:PublishTopic("Button", id)
 		self:Disappear()
@@ -60,6 +103,29 @@ function Button:CreatePrompt()
 
 	Prompt.Parent = self.Instance
 	return Prompt
+end
+
+function Button:SetVisible(visible)
+	if not self.Instance or not self.Instance:IsDescendantOf(game) then return end
+	if visible then
+		self.Instance.Parent = self.Tycoon.Tycoon.Buttons
+		print("please fix this daddy")
+	else
+		local storage = tycoonStorage:FindFirstChild(self.Tycoon.Owner.Name)
+		if storage then
+			local buttonsFolder = storage:FindFirstChild("Buttons")
+
+			if buttonsFolder then
+				self.Instance.Parent = buttonsFolder
+			else
+				buttonsFolder = Instance.new("Folder")
+				buttonsFolder.Name = "Buttons"
+				buttonsFolder.Parent = storage
+
+				self.Instance.Parent = buttonsFolder
+			end
+		end
+	end
 end
 
 return Button
