@@ -16,7 +16,7 @@ local playerRemoving = Instance.new("BindableEvent")
 dataHandler.PlayerAdded = playerAdded.Event
 dataHandler.PlayerRemoving = playerRemoving.Event
 
-local dataStore = dataStoreService:GetDataStore("Pickle_TycoonData4")
+local dataStore = dataStoreService:GetDataStore("Pickle_TycoonData6")
 
 function dataHandler.LoadData(Player: Player)
 	local sucess, result = pcall(function()
@@ -87,9 +87,9 @@ function dataHandler.OnPlayerRemoving(Player: Player)
 		folder:Destroy()
 	end
 
-	if not game:GetService("RunService"):IsStudio() then
+	--if not game:GetService("RunService"):IsStudio() then
 		dataHandler.SaveData(Player, dataHandler.SessionData[Player.UserId])
-	end
+	--end
 
 	playerRemoving:Fire(Player)
 end
